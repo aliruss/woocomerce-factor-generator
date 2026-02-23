@@ -1,0 +1,139 @@
+@page {
+  size: A4;
+  margin: 10mm;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  font-family: "VazirmatnPlaceholder", "Tahoma", sans-serif;
+  direction: rtl;
+  color: #111;
+  font-size: 3.6mm;
+  line-height: 1.55;
+}
+
+.sheet-section {
+  page-break-inside: avoid;
+  break-inside: avoid;
+  margin-bottom: 4mm;
+}
+
+.page-break-before {
+  page-break-before: always;
+  break-before: page;
+}
+
+.doc {
+  border: 0.2mm solid #333;
+  padding: 4mm;
+}
+
+.doc-header {
+  border-bottom: 0.2mm solid #999;
+  margin-bottom: 3mm;
+  padding-bottom: 2mm;
+}
+
+h1,
+h2,
+h3,
+p {
+  margin: 0;
+}
+
+h1,
+h2 {
+  font-size: 5mm;
+  margin-bottom: 2mm;
+}
+
+h3 {
+  font-size: 4mm;
+  margin-bottom: 1mm;
+}
+
+.meta-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1mm 4mm;
+}
+
+.label {
+  font-weight: 700;
+}
+
+.items-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 2mm;
+  page-break-inside: avoid;
+}
+
+.items-table th,
+.items-table td {
+  border: 0.2mm solid #777;
+  padding: 1.2mm;
+  vertical-align: middle;
+}
+
+.items-table th {
+  font-weight: 700;
+}
+
+.items-table tr {
+  page-break-inside: avoid;
+}
+
+.invoice-footer {
+  margin-top: 3mm;
+  display: grid;
+  gap: 2mm;
+}
+
+.total-row {
+  border-top: 0.2mm solid #999;
+  padding-top: 2mm;
+  display: flex;
+  justify-content: space-between;
+}
+
+.note-box,
+.box {
+  border: 0.2mm solid #999;
+  padding: 2mm;
+}
+
+.note-box p {
+  margin-top: 1mm;
+}
+
+.address-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 3mm;
+}
+
+.receiver p,
+.sender p,
+.summary-row p {
+  margin-bottom: 1mm;
+}
+
+.summary-row {
+  margin-top: 3mm;
+  display: flex;
+  justify-content: space-between;
+}
+
+.cut-guide {
+  margin-top: 3mm;
+  min-height: 20mm;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-style: dashed;
+}

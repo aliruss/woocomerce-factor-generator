@@ -1,0 +1,26 @@
+<!doctype html>
+<html lang="fa" dir="rtl">
+  <head>
+    <meta charset="utf-8">
+    <title>Invoice + Packing Slip</title>
+    {% if font_path %}
+    <style>
+      @font-face {
+        font-family: "VazirmatnPlaceholder";
+        src: url("{{ font_path }}") format("truetype");
+        font-weight: normal;
+        font-style: normal;
+      }
+    </style>
+    {% endif %}
+  </head>
+  <body>
+    <section class="sheet-section invoice-block">
+      {{ invoice_html | safe }}
+    </section>
+
+    <section class="sheet-section packing-block {% if layout == 'new_page' %}page-break-before{% endif %}">
+      {{ packing_html | safe }}
+    </section>
+  </body>
+</html>

@@ -1,0 +1,33 @@
+{
+  "id": 1042,
+  "number": "1042",
+  "date_created": "2026-02-22T09:30:00",
+  "total": "1590000",
+  "customer_note": "لطفاً قبل از ارسال تماس بگیرید.",
+  "billing": {
+    "first_name": "علی",
+    "last_name": "محمدی",
+    "phone": "09121234567"
+  },
+  "shipping": {
+    "first_name": "علی",
+    "last_name": "محمدی",
+    "address_1": "تهران، خیابان مثال، پلاک ۱۰",
+    "address_2": "واحد ۳",
+    "city": "تهران",
+    "state": "تهران",
+    "postcode": "1234567890"
+  },
+  "line_items": [
+    {
+      "name": "ماسک سه لایه",
+      "quantity": 2,
+      "total": "340000"
+    },
+    {
+      "name": "محلول ضدعفونی 500ml",
+      "quantity": 5,
+      "total": "1250000"
+    }
+  ]
+}
