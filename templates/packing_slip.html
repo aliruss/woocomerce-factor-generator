@@ -1,6 +1,7 @@
 <article class="doc packing-slip" id="packing-root">
   <header class="doc-header">
-    <h2>Packing Slip | برگه ارسال</h2>
+    <h2>مرسوله ارسال از {{ store.name }}</h2>
+    <p class="store-name">{{ store.name }}</p>
   </header>
 
   <section class="address-grid">
@@ -24,9 +25,5 @@
   <section class="summary-row box">
     <p><span class="label">شماره سفارش:</span> {{ order_number }}</p>
     <p><span class="label">تعداد کل اقلام:</span> {{ total_items_count }}</p>
-  </section>
-
-  <section class="cut-guide box">
-    <p>این قسمت برای برش و چسباندن روی بسته طراحی شده است.</p>
   </section>
 </article>
