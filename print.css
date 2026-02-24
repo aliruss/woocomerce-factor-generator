@@ -17,6 +17,7 @@ body {
 }
 
 .sheet-section {
+  position: relative;
   page-break-inside: avoid;
   break-inside: avoid;
   margin-bottom: 4mm;
@@ -28,8 +29,36 @@ body {
 }
 
 .doc {
+  position: relative;
   border: 0.2mm solid #333;
   padding: 4mm;
+  overflow: hidden;
+}
+
+.doc-content {
+  position: relative;
+  z-index: 1;
+}
+
+.doc-watermark {
+  position: absolute;
+  inset: 6mm 4mm;
+  z-index: 0;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 18mm 10mm;
+  align-content: space-evenly;
+  justify-items: center;
+  pointer-events: none;
+}
+
+.doc-watermark span {
+  text-align: center;
+  font-size: var(--watermark-font-size-mm, 8mm);
+  font-weight: 700;
+  color: rgba(0, 0, 0, var(--watermark-opacity, 0.08));
+  transform: rotate(var(--watermark-rotation, -25deg));
+  white-space: nowrap;
 }
 
 .doc-header {
@@ -129,11 +158,8 @@ h3 {
   justify-content: space-between;
 }
 
-.cut-guide {
-  margin-top: 3mm;
-  min-height: 20mm;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  border-style: dashed;
+.store-name {
+  font-size: 4.2mm;
+  font-weight: 700;
+  margin-bottom: 2mm;
 }
