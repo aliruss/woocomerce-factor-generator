@@ -265,6 +265,7 @@ def build_final_html(generator: OrderDocumentGenerator, context: Dict[str, Any])
             "packing_html": packing_partial,
             "layout": layout,
             "font_path": str(generator.font_path) if generator.font_path else None,
+            "watermark_text": context["store"].watermark_text,
         },
     )
     return final_html, invoice_height_mm, layout
