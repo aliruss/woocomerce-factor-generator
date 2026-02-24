@@ -59,6 +59,13 @@ python generator.py --env-file .env --sync-woocommerce --continuous
 - `--state-file ./custom_state.json` برای مسیر فایل state
 - `--max-pages 10` برای تعداد صفحات سفارش که در هر دور خوانده می‌شود
 
+متغیرهای اصلی فروشگاه در `.env`:
+
+- `STORE_NAME` (نام فروشگاه)
+- `STORE_PHONE`
+- `STORE_ADDRESS`
+- `STORE_POSTCODE`
+
 ### تولید سفارش نمونه از `.env`
 
 ```bash
