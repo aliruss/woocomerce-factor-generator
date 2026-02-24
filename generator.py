@@ -4,12 +4,17 @@
 from __future__ import annotations
 
 import argparse
+import base64
 import json
+import time
 from dataclasses import dataclass
 from datetime import datetime
 from decimal import Decimal, InvalidOperation
 from pathlib import Path
 from typing import Any, Dict, Iterable, Optional
+from urllib.error import HTTPError, URLError
+from urllib.parse import urlencode
+from urllib.request import Request, urlopen
 
 
 A4_HEIGHT_MM = 297.0
@@ -28,6 +33,17 @@ class StoreInfo:
     watermark_font_size_mm: str = "8"
     watermark_opacity: str = "0.08"
     watermark_rotation_deg: str = "-25"
+
+
+@dataclass(frozen=True)
+class WooConfig:
+    base_url: str
+    consumer_key: str
+    consumer_secret: str
+    statuses: tuple[str, ...]
+    output_dir: Path
+    state_file: Path
+    poll_interval_seconds: int
 
 
 class OrderDocumentGenerator:
@@ -135,6 +151,34 @@ def make_store_info(env_values: Dict[str, str]) -> StoreInfo:
         watermark_font_size_mm=env_values.get("STORE_WATERMARK_FONT_SIZE_MM", "8"),
         watermark_opacity=env_values.get("STORE_WATERMARK_OPACITY", "0.08"),
         watermark_rotation_deg=env_values.get("STORE_WATERMARK_ROTATION_DEG", "-25"),
+    )
+
+
+def make_woo_config(env_values: Dict[str, str], state_file_override: Optional[Path], poll_override: Optional[int]) -> WooConfig:
+    base_url = env_values.get("WOO_BASE_URL", "").strip().rstrip("/")
+    consumer_key = env_values.get("WOO_CONSUMER_KEY", "").strip()
+    consumer_secret = env_values.get("WOO_CONSUMER_SECRET", "").strip()
+
+    if not base_url or not consumer_key or not consumer_secret:
+        raise SystemExit(
+            "برای اتصال خودکار به ووکامرس باید WOO_BASE_URL و WOO_CONSUMER_KEY و WOO_CONSUMER_SECRET در .env تنظیم شوند."
+        )
+
+    statuses_raw = env_values.get("WOO_ORDER_STATUSES", "processing,on-hold").strip()
+    statuses = tuple([s.strip() for s in statuses_raw.split(",") if s.strip()]) or ("processing", "on-hold")
+
+    output_dir = Path(env_values.get("WOO_OUTPUT_DIR", "./output")).expanduser()
+    state_file = state_file_override or Path(env_values.get("WOO_STATE_FILE", "./.woo_processed_orders.json")).expanduser()
+    poll_interval_seconds = poll_override or int(env_values.get("WOO_POLL_INTERVAL_SECONDS", "60"))
+
+    return WooConfig(
+        base_url=base_url,
+        consumer_key=consumer_key,
+        consumer_secret=consumer_secret,
+        statuses=statuses,
+        output_dir=output_dir,
+        state_file=state_file,
+        poll_interval_seconds=max(5, poll_interval_seconds),
     )
 
 
@@ -344,6 +388,116 @@ def generate_sample_order(env_values: Dict[str, str]) -> Dict[str, Any]:
     }
 
 
+def create_generator(base_dir: Path, env_values: Dict[str, str], cli_font_path: Optional[Path]) -> OrderDocumentGenerator:
+    resolved_font_path = cli_font_path
+    if resolved_font_path is None and env_values.get("FONT_PATH"):
+        resolved_font_path = Path(env_values["FONT_PATH"])
+
+    return OrderDocumentGenerator(
+        template_dir=base_dir / "templates",
+        css_path=base_dir / "print.css",
+        font_path=resolved_font_path,
+    )
+
+
+def generate_single_order_pdf(
+    order: Dict[str, Any],
+    store: StoreInfo,
+    generator: OrderDocumentGenerator,
+    output_root: Path,
+) -> Path:
+    context = normalize_order(order, store)
+    output_path = resolve_output_path(output_root, str(context["order_number"]), datetime.now())
+    final_html, _, _ = build_final_html(generator, context)
+    generator.generate_pdf(final_html, output_path)
+    return output_path
+
+
+def load_processed_order_ids(state_file: Path) -> set[int]:
+    if not state_file.exists():
+        return set()
+    try:
+        data = json.loads(state_file.read_text(encoding="utf-8"))
+    except json.JSONDecodeError:
+        return set()
+    ids = data.get("processed_order_ids", [])
+    return {int(i) for i in ids if str(i).isdigit()}
+
+
+def save_processed_order_ids(state_file: Path, processed_ids: set[int]) -> None:
+    state_file.parent.mkdir(parents=True, exist_ok=True)
+    payload = {"processed_order_ids": sorted(processed_ids)}
+    state_file.write_text(json.dumps(payload, ensure_ascii=False, indent=2), encoding="utf-8")
+
+
+def fetch_woocommerce_orders(config: WooConfig, per_page: int, page: int) -> list[Dict[str, Any]]:
+    params = {
+        "per_page": str(per_page),
+        "page": str(page),
+        "orderby": "date",
+        "order": "asc",
+        "status": ",".join(config.statuses),
+    }
+    url = f"{config.base_url}/wp-json/wc/v3/orders?{urlencode(params)}"
+    token = base64.b64encode(f"{config.consumer_key}:{config.consumer_secret}".encode("utf-8")).decode("ascii")
+    req = Request(url, headers={"Authorization": f"Basic {token}", "Accept": "application/json"})
+
+    try:
+        with urlopen(req, timeout=30) as response:
+            body = response.read().decode("utf-8")
+    except HTTPError as exc:
+        raise RuntimeError(f"WooCommerce API error {exc.code}: {exc.reason}") from exc
+    except URLError as exc:
+        raise RuntimeError(f"WooCommerce API connection error: {exc.reason}") from exc
+
+    parsed = json.loads(body)
+    if not isinstance(parsed, list):
+        return []
+    return [order for order in parsed if isinstance(order, dict)]
+
+
+def sync_woocommerce_orders(
+    config: WooConfig,
+    store: StoreInfo,
+    generator: OrderDocumentGenerator,
+    continuous: bool,
+    max_pages: int,
+) -> None:
+    processed_ids = load_processed_order_ids(config.state_file)
+
+    while True:
+        generated_count = 0
+
+        for page in range(1, max_pages + 1):
+            orders = fetch_woocommerce_orders(config, per_page=50, page=page)
+            if not orders:
+                break
+
+            for order in orders:
+                raw_order_id = order.get("id")
+                if not isinstance(raw_order_id, int):
+                    continue
+                if raw_order_id in processed_ids:
+                    continue
+
+                pdf_path = generate_single_order_pdf(order, store, generator, config.output_dir)
+                processed_ids.add(raw_order_id)
+                save_processed_order_ids(config.state_file, processed_ids)
+                generated_count += 1
+                print(f"Generated invoice for order #{order.get('number', raw_order_id)} -> {pdf_path}")
+
+            if len(orders) < 50:
+                break
+
+        print(f"Sync complete. New PDFs generated: {generated_count}")
+
+        if not continuous:
+            return
+
+        print(f"Waiting {config.poll_interval_seconds}s for next poll...")
+        time.sleep(config.poll_interval_seconds)
+
+
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(description="Generate Persian invoice and packing slip PDF from WooCommerce order JSON.")
     parser.add_argument("input_json", type=Path, nargs="?", help="Path to WooCommerce order JSON file")
@@ -356,6 +510,11 @@ def parse_args() -> argparse.Namespace:
         default=None,
         help="Generate a sample WooCommerce order JSON from .env values and exit",
     )
+    parser.add_argument("--sync-woocommerce", action="store_true", help="Fetch orders from WooCommerce and generate PDFs")
+    parser.add_argument("--continuous", action="store_true", help="Keep polling WooCommerce forever")
+    parser.add_argument("--poll-interval", type=int, default=None, help="Polling interval in seconds (override .env)")
+    parser.add_argument("--state-file", type=Path, default=None, help="State file path for processed WooCommerce order IDs")
+    parser.add_argument("--max-pages", type=int, default=5, help="Max pages to read from WooCommerce orders API per sync")
     return parser.parse_args()
 
 
@@ -372,31 +531,21 @@ def main() -> None:
         print(f"Sample order created: {args.generate_sample_order}")
         return
 
-    if not args.input_json or not args.output_pdf:
-        raise SystemExit("input_json و output_pdf لازم هستند (یا از --generate-sample-order استفاده کنید).")
-
-    order = json.loads(args.input_json.read_text(encoding="utf-8"))
-    store = make_store_info(env_values)
-    context = normalize_order(order, store)
-
-    resolved_font_path = args.font_path
-    if resolved_font_path is None and env_values.get("FONT_PATH"):
-        resolved_font_path = Path(env_values["FONT_PATH"])
-
     base_dir = Path(__file__).parent
-    generator = OrderDocumentGenerator(
-        template_dir=base_dir / "templates",
-        css_path=base_dir / "print.css",
-        font_path=resolved_font_path,
-    )
+    store = make_store_info(env_values)
 
-    output_path = resolve_output_path(args.output_pdf, str(context["order_number"]), datetime.now())
+    if args.sync_woocommerce:
+        config = make_woo_config(env_values, args.state_file, args.poll_interval)
+        generator = create_generator(base_dir, env_values, args.font_path)
+        sync_woocommerce_orders(config, store, generator, continuous=args.continuous, max_pages=max(1, args.max_pages))
+        return
 
-    final_html, invoice_height_mm, layout = build_final_html(generator, context)
-    generator.generate_pdf(final_html, output_path)
+    if not args.input_json or not args.output_pdf:
+        raise SystemExit("input_json و output_pdf لازم هستند (یا از --generate-sample-order/--sync-woocommerce استفاده کنید).")
 
-    print(f"Invoice height: {invoice_height_mm:.2f} mm")
-    print(f"Layout decision: {layout}")
+    generator = create_generator(base_dir, env_values, args.font_path)
+    order = json.loads(args.input_json.read_text(encoding="utf-8"))
+    output_path = generate_single_order_pdf(order, store, generator, args.output_pdf)
     print(f"PDF created: {output_path}")
 
 
