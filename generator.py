@@ -125,8 +125,6 @@ def join_non_empty(parts: Iterable[str], sep: str = "، ") -> str:
 
 def make_store_info(env_values: Dict[str, str]) -> StoreInfo:
     store_name = env_values.get("STORE_NAME", "[نام فروشگاه]")
-    watermark_enabled_raw = env_values.get("STORE_WATERMARK_ENABLED", "false").strip().lower()
-    watermark_enabled = watermark_enabled_raw in {"1", "true", "yes", "on"}
     return StoreInfo(
         name=store_name,
         phone=env_values.get("STORE_PHONE", "[تلفن فروشگاه]"),
