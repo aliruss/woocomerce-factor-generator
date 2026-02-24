@@ -21,6 +21,7 @@ body {
   page-break-inside: avoid;
   break-inside: avoid;
   margin-bottom: 4mm;
+  overflow: hidden;
 }
 
 .page-break-before {
