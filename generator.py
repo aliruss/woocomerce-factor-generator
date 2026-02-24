@@ -23,6 +23,11 @@ class StoreInfo:
     phone: str = "[تلفن فروشگاه]"
     address: str = "[آدرس فروشگاه]"
     postcode: str = "[کد پستی فروشگاه]"
+    watermark_text: str = ""
+    watermark_enabled: bool = False
+    watermark_font_size_mm: str = "8"
+    watermark_opacity: str = "0.08"
+    watermark_rotation_deg: str = "-25"
 
 
 class OrderDocumentGenerator:
@@ -125,6 +130,11 @@ def make_store_info(env_values: Dict[str, str]) -> StoreInfo:
         phone=env_values.get("STORE_PHONE", "[تلفن فروشگاه]"),
         address=env_values.get("STORE_ADDRESS", "[آدرس فروشگاه]"),
         postcode=env_values.get("STORE_POSTCODE", "[کد پستی فروشگاه]"),
+        watermark_text=env_values.get("STORE_WATERMARK_TEXT", store_name),
+        watermark_enabled=watermark_enabled,
+        watermark_font_size_mm=env_values.get("STORE_WATERMARK_FONT_SIZE_MM", "8"),
+        watermark_opacity=env_values.get("STORE_WATERMARK_OPACITY", "0.08"),
+        watermark_rotation_deg=env_values.get("STORE_WATERMARK_ROTATION_DEG", "-25"),
     )
 
 
@@ -253,6 +263,7 @@ def build_final_html(generator: OrderDocumentGenerator, context: Dict[str, Any])
             "packing_html": packing_partial,
             "layout": layout,
             "font_path": str(generator.font_path) if generator.font_path else None,
+            "watermark_text": context["store"].watermark_text,
         },
     )
     return final_html, invoice_height_mm, layout
