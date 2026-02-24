@@ -24,6 +24,10 @@ class StoreInfo:
     address: str = "[آدرس فروشگاه]"
     postcode: str = "[کد پستی فروشگاه]"
     watermark_text: str = ""
+    watermark_enabled: bool = False
+    watermark_font_size_mm: str = "8"
+    watermark_opacity: str = "0.08"
+    watermark_rotation_deg: str = "-25"
 
 
 class OrderDocumentGenerator:
@@ -121,12 +125,18 @@ def join_non_empty(parts: Iterable[str], sep: str = "، ") -> str:
 
 def make_store_info(env_values: Dict[str, str]) -> StoreInfo:
     store_name = env_values.get("STORE_NAME", "[نام فروشگاه]")
+    watermark_enabled_raw = env_values.get("STORE_WATERMARK_ENABLED", "false").strip().lower()
+    watermark_enabled = watermark_enabled_raw in {"1", "true", "yes", "on"}
     return StoreInfo(
         name=store_name,
         phone=env_values.get("STORE_PHONE", "[تلفن فروشگاه]"),
         address=env_values.get("STORE_ADDRESS", "[آدرس فروشگاه]"),
         postcode=env_values.get("STORE_POSTCODE", "[کد پستی فروشگاه]"),
         watermark_text=env_values.get("STORE_WATERMARK_TEXT", store_name),
+        watermark_enabled=watermark_enabled,
+        watermark_font_size_mm=env_values.get("STORE_WATERMARK_FONT_SIZE_MM", "8"),
+        watermark_opacity=env_values.get("STORE_WATERMARK_OPACITY", "0.08"),
+        watermark_rotation_deg=env_values.get("STORE_WATERMARK_ROTATION_DEG", "-25"),
     )
 
 
@@ -166,12 +176,23 @@ def gregorian_to_jalali(year: int, month: int, day: int) -> tuple[int, int, int]
 
 
 def resolve_output_path(requested_output: Path, order_number: str, now: datetime) -> Path:
-    jy, jm, _ = gregorian_to_jalali(now.year, now.month, now.day)
+    jy, jm, jd = gregorian_to_jalali(now.year, now.month, now.day)
     base_dir = requested_output.parent if requested_output.suffix.lower() == ".pdf" else requested_output
 
     target_dir = base_dir / str(jy) / f"{jm:02d}"
     target_dir.mkdir(parents=True, exist_ok=True)
-    return target_dir / f"{order_number}.pdf"
+    return target_dir / f"{jy:04d}{jm:02d}{jd:02d}_{order_number}.pdf"
+
+
+def format_jalali_datetime(value: str) -> str:
+    if not value:
+        return "—"
+    try:
+        dt = datetime.fromisoformat(value.replace("Z", "+00:00"))
+        jy, jm, jd = gregorian_to_jalali(dt.year, dt.month, dt.day)
+        return f"{jy:04d}/{jm:02d}/{jd:02d} {dt:%H:%M}"
+    except ValueError:
+        return value
 
 
 def normalize_order(order: Dict[str, Any], store: StoreInfo) -> Dict[str, Any]:
@@ -200,11 +221,7 @@ def normalize_order(order: Dict[str, Any], store: StoreInfo) -> Dict[str, Any]:
             }
         )
 
-    order_date = order.get("date_created") or ""
-    try:
-        order_date_fa = datetime.fromisoformat(order_date.replace("Z", "+00:00")).strftime("%Y/%m/%d %H:%M")
-    except ValueError:
-        order_date_fa = order_date or "—"
+    order_date_fa = format_jalali_datetime(order.get("date_created") or "")
 
     shipping_address = join_non_empty(
         [
