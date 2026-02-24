@@ -119,12 +119,68 @@ def join_non_empty(parts: Iterable[str], sep: str = "، ") -> str:
 
 
 def make_store_info(env_values: Dict[str, str]) -> StoreInfo:
+    store_name = env_values.get("STORE_NAME", "[نام فروشگاه]")
     return StoreInfo(
-        name=env_values.get("STORE_NAME", "[نام فروشگاه]"),
+        name=store_name,
         phone=env_values.get("STORE_PHONE", "[تلفن فروشگاه]"),
         address=env_values.get("STORE_ADDRESS", "[آدرس فروشگاه]"),
         postcode=env_values.get("STORE_POSTCODE", "[کد پستی فروشگاه]"),
     )
+
+
+def gregorian_to_jalali(year: int, month: int, day: int) -> tuple[int, int, int]:
+    g_days_in_month = [31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31]
+    j_days_in_month = [31, 31, 31, 31, 31, 31, 30, 30, 30, 30, 30, 29]
+
+    gy = year - 1600
+    gm = month - 1
+    gd = day - 1
+
+    g_day_no = 365 * gy + (gy + 3) // 4 - (gy + 99) // 100 + (gy + 399) // 400
+    for i in range(gm):
+        g_day_no += g_days_in_month[i]
+    if gm > 1 and ((year % 4 == 0 and year % 100 != 0) or (year % 400 == 0)):
+        g_day_no += 1
+    g_day_no += gd
+
+    j_day_no = g_day_no - 79
+    j_np = j_day_no // 12053
+    j_day_no %= 12053
+
+    jy = 979 + 33 * j_np + 4 * (j_day_no // 1461)
+    j_day_no %= 1461
+
+    if j_day_no >= 366:
+        jy += (j_day_no - 1) // 365
+        j_day_no = (j_day_no - 1) % 365
+
+    jm = 0
+    while jm < 11 and j_day_no >= j_days_in_month[jm]:
+        j_day_no -= j_days_in_month[jm]
+        jm += 1
+
+    jd = j_day_no + 1
+    return jy, jm + 1, jd
+
+
+def resolve_output_path(requested_output: Path, order_number: str, now: datetime) -> Path:
+    jy, jm, jd = gregorian_to_jalali(now.year, now.month, now.day)
+    base_dir = requested_output.parent if requested_output.suffix.lower() == ".pdf" else requested_output
+
+    target_dir = base_dir / str(jy) / f"{jm:02d}"
+    target_dir.mkdir(parents=True, exist_ok=True)
+    return target_dir / f"{jy:04d}{jm:02d}{jd:02d}_{order_number}.pdf"
+
+
+def format_jalali_datetime(value: str) -> str:
+    if not value:
+        return "—"
+    try:
+        dt = datetime.fromisoformat(value.replace("Z", "+00:00"))
+        jy, jm, jd = gregorian_to_jalali(dt.year, dt.month, dt.day)
+        return f"{jy:04d}/{jm:02d}/{jd:02d} {dt:%H:%M}"
+    except ValueError:
+        return value
 
 
 def normalize_order(order: Dict[str, Any], store: StoreInfo) -> Dict[str, Any]:
@@ -153,11 +209,7 @@ def normalize_order(order: Dict[str, Any], store: StoreInfo) -> Dict[str, Any]:
             }
         )
 
-    order_date = order.get("date_created") or ""
-    try:
-        order_date_fa = datetime.fromisoformat(order_date.replace("Z", "+00:00")).strftime("%Y/%m/%d %H:%M")
-    except ValueError:
-        order_date_fa = order_date or "—"
+    order_date_fa = format_jalali_datetime(order.get("date_created") or "")
 
     shipping_address = join_non_empty(
         [
@@ -327,12 +379,14 @@ def main() -> None:
         font_path=resolved_font_path,
     )
 
+    output_path = resolve_output_path(args.output_pdf, str(context["order_number"]), datetime.now())
+
     final_html, invoice_height_mm, layout = build_final_html(generator, context)
-    generator.generate_pdf(final_html, args.output_pdf)
+    generator.generate_pdf(final_html, output_path)
 
     print(f"Invoice height: {invoice_height_mm:.2f} mm")
     print(f"Layout decision: {layout}")
-    print(f"PDF created: {args.output_pdf}")
+    print(f"PDF created: {output_path}")
 
 
 if __name__ == "__main__":

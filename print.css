@@ -17,6 +17,7 @@ body {
 }
 
 .sheet-section {
+  position: relative;
   page-break-inside: avoid;
   break-inside: avoid;
   margin-bottom: 4mm;
@@ -28,8 +29,15 @@ body {
 }
 
 .doc {
+  position: relative;
   border: 0.2mm solid #333;
   padding: 4mm;
+  overflow: hidden;
+}
+
+.doc-content {
+  position: relative;
+  z-index: 1;
 }
 
 .doc-header {
@@ -129,11 +137,8 @@ h3 {
   justify-content: space-between;
 }
 
-.cut-guide {
-  margin-top: 3mm;
-  min-height: 20mm;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  border-style: dashed;
+.store-name {
+  font-size: 4.2mm;
+  font-weight: 700;
+  margin-bottom: 2mm;
 }
