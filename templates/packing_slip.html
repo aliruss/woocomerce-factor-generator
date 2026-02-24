@@ -1,29 +1,37 @@
 <article class="doc packing-slip" id="packing-root">
-  <header class="doc-header">
-    <h2>مرسوله ارسال از {{ store.name }}</h2>
-    <p class="store-name">{{ store.name }}</p>
-  </header>
+  <div class="doc-watermark" aria-hidden="true">
+    {% for _ in range(16) %}
+    <span>{{ store.watermark_text }}</span>
+    {% endfor %}
+  </div>
 
-  <section class="address-grid">
-    <div class="box sender">
-      <h3>فرستنده</h3>
-      <p><span class="label">نام فروشگاه:</span> {{ store.name }}</p>
-      <p><span class="label">تلفن:</span> {{ store.phone }}</p>
-      <p><span class="label">آدرس:</span> {{ store.address }}</p>
-      <p><span class="label">کد پستی:</span> {{ store.postcode }}</p>
-    </div>
+  <div class="doc-content">
+    <header class="doc-header">
+      <h2>مرسوله ارسال از {{ store.name }}</h2>
+      <p class="store-name">{{ store.name }}</p>
+    </header>
 
-    <div class="box receiver">
-      <h3>گیرنده</h3>
-      <p><span class="label">نام کامل:</span> {{ shipping_name }}</p>
-      <p><span class="label">تلفن:</span> {{ shipping_phone }}</p>
-      <p><span class="label">آدرس کامل:</span> {{ shipping_address }}</p>
-      <p><span class="label">کد پستی:</span> {{ shipping_postcode }}</p>
-    </div>
-  </section>
+    <section class="address-grid">
+      <div class="box sender">
+        <h3>فرستنده</h3>
+        <p><span class="label">نام فروشگاه:</span> {{ store.name }}</p>
+        <p><span class="label">تلفن:</span> {{ store.phone }}</p>
+        <p><span class="label">آدرس:</span> {{ store.address }}</p>
+        <p><span class="label">کد پستی:</span> {{ store.postcode }}</p>
+      </div>
 
-  <section class="summary-row box">
-    <p><span class="label">شماره سفارش:</span> {{ order_number }}</p>
-    <p><span class="label">تعداد کل اقلام:</span> {{ total_items_count }}</p>
-  </section>
+      <div class="box receiver">
+        <h3>گیرنده</h3>
+        <p><span class="label">نام کامل:</span> {{ shipping_name }}</p>
+        <p><span class="label">تلفن:</span> {{ shipping_phone }}</p>
+        <p><span class="label">آدرس کامل:</span> {{ shipping_address }}</p>
+        <p><span class="label">کد پستی:</span> {{ shipping_postcode }}</p>
+      </div>
+    </section>
+
+    <section class="summary-row box">
+      <p><span class="label">شماره سفارش:</span> {{ order_number }}</p>
+      <p><span class="label">تعداد کل اقلام:</span> {{ total_items_count }}</p>
+    </section>
+  </div>
 </article>
