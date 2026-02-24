@@ -23,6 +23,7 @@ class StoreInfo:
     phone: str = "[تلفن فروشگاه]"
     address: str = "[آدرس فروشگاه]"
     postcode: str = "[کد پستی فروشگاه]"
+    watermark_text: str = ""
 
 
 class OrderDocumentGenerator:
@@ -119,12 +120,58 @@ def join_non_empty(parts: Iterable[str], sep: str = "، ") -> str:
 
 
 def make_store_info(env_values: Dict[str, str]) -> StoreInfo:
+    store_name = env_values.get("STORE_NAME", "[نام فروشگاه]")
     return StoreInfo(
-        name=env_values.get("STORE_NAME", "[نام فروشگاه]"),
+        name=store_name,
         phone=env_values.get("STORE_PHONE", "[تلفن فروشگاه]"),
         address=env_values.get("STORE_ADDRESS", "[آدرس فروشگاه]"),
         postcode=env_values.get("STORE_POSTCODE", "[کد پستی فروشگاه]"),
+        watermark_text=env_values.get("STORE_WATERMARK_TEXT", store_name),
     )
+
+
+def gregorian_to_jalali(year: int, month: int, day: int) -> tuple[int, int, int]:
+    g_days_in_month = [31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31]
+    j_days_in_month = [31, 31, 31, 31, 31, 31, 30, 30, 30, 30, 30, 29]
+
+    gy = year - 1600
+    gm = month - 1
+    gd = day - 1
+
+    g_day_no = 365 * gy + (gy + 3) // 4 - (gy + 99) // 100 + (gy + 399) // 400
+    for i in range(gm):
+        g_day_no += g_days_in_month[i]
+    if gm > 1 and ((year % 4 == 0 and year % 100 != 0) or (year % 400 == 0)):
+        g_day_no += 1
+    g_day_no += gd
+
+    j_day_no = g_day_no - 79
+    j_np = j_day_no // 12053
+    j_day_no %= 12053
+
+    jy = 979 + 33 * j_np + 4 * (j_day_no // 1461)
+    j_day_no %= 1461
+
+    if j_day_no >= 366:
+        jy += (j_day_no - 1) // 365
+        j_day_no = (j_day_no - 1) % 365
+
+    jm = 0
+    while jm < 11 and j_day_no >= j_days_in_month[jm]:
+        j_day_no -= j_days_in_month[jm]
+        jm += 1
+
+    jd = j_day_no + 1
+    return jy, jm + 1, jd
+
+
+def resolve_output_path(requested_output: Path, order_number: str, now: datetime) -> Path:
+    jy, jm, _ = gregorian_to_jalali(now.year, now.month, now.day)
+    base_dir = requested_output.parent if requested_output.suffix.lower() == ".pdf" else requested_output
+
+    target_dir = base_dir / str(jy) / f"{jm:02d}" / str(order_number)
+    target_dir.mkdir(parents=True, exist_ok=True)
+    return target_dir / f"{order_number}.pdf"
 
 
 def normalize_order(order: Dict[str, Any], store: StoreInfo) -> Dict[str, Any]:
@@ -201,6 +248,7 @@ def build_final_html(generator: OrderDocumentGenerator, context: Dict[str, Any])
             "packing_html": packing_partial,
             "layout": layout,
             "font_path": str(generator.font_path) if generator.font_path else None,
+            "watermark_text": context["store"].watermark_text,
         },
     )
     return final_html, invoice_height_mm, layout
@@ -327,12 +375,14 @@ def main() -> None:
         font_path=resolved_font_path,
     )
 
+    output_path = resolve_output_path(args.output_pdf, str(context["order_number"]), datetime.now())
+
     final_html, invoice_height_mm, layout = build_final_html(generator, context)
-    generator.generate_pdf(final_html, args.output_pdf)
+    generator.generate_pdf(final_html, output_path)
 
     print(f"Invoice height: {invoice_height_mm:.2f} mm")
     print(f"Layout decision: {layout}")
-    print(f"PDF created: {args.output_pdf}")
+    print(f"PDF created: {output_path}")
 
 
 if __name__ == "__main__":

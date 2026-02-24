@@ -15,6 +15,12 @@
     {% endif %}
   </head>
   <body>
+    <div class="watermark-layer" aria-hidden="true">
+      {% for _ in range(20) %}
+      <span>{{ watermark_text }}</span>
+      {% endfor %}
+    </div>
+
     <section class="sheet-section invoice-block">
       {{ invoice_html | safe }}
     </section>
