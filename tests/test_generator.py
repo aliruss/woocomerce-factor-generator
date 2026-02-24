@@ -33,6 +33,14 @@ class TestWatermarkRemovalRegression(unittest.TestCase):
         self.assertNotIn("watermark_opacity", field_names)
         self.assertNotIn("watermark_rotation_deg", field_names)
 
+
+    def test_make_store_info_source_has_no_removed_watermark_identifier(self):
+        import inspect
+        import generator
+
+        source = inspect.getsource(generator.make_store_info)
+        self.assertNotIn("watermark_enabled", source)
+
     def test_parse_dotenv_ignores_missing_file(self):
         env_values = parse_dotenv(Path("tests/does-not-exist.env"))
         self.assertEqual(env_values, {})
