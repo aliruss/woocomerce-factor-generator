@@ -43,25 +43,23 @@ body {
 
 .doc-watermark {
   position: absolute;
-  inset: 0;
+  inset: 6mm 4mm;
   z-index: 0;
-  display: flex;
-  flex-wrap: wrap;
-  align-content: space-around;
-  justify-content: space-around;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 18mm 10mm;
+  align-content: space-evenly;
+  justify-items: center;
   pointer-events: none;
-  padding: 6mm 2mm;
 }
 
 .doc-watermark span {
-  width: 45%;
   text-align: center;
-  font-size: 10mm;
+  font-size: var(--watermark-font-size-mm, 8mm);
   font-weight: 700;
-  color: rgba(0, 0, 0, 0.11);
-  transform: rotate(-28deg);
+  color: rgba(0, 0, 0, var(--watermark-opacity, 0.08));
+  transform: rotate(var(--watermark-rotation, -25deg));
   white-space: nowrap;
-  margin: 6mm 0;
 }
 
 .doc-header {

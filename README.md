@@ -29,7 +29,11 @@ pip install -r requirements.txt
 - `STORE_PHONE`
 - `STORE_ADDRESS`
 - `STORE_POSTCODE`
+- `STORE_WATERMARK_ENABLED` (روشن/خاموش کردن واترمارک؛ `true` یا `false`)
 - `STORE_WATERMARK_TEXT` (اختیاری؛ اگر تنظیم نشود از `STORE_NAME` استفاده می‌شود)
+- `STORE_WATERMARK_FONT_SIZE_MM` (سایز متن واترمارک به میلی‌متر)
+- `STORE_WATERMARK_OPACITY` (مقدار شفافیت واترمارک بین `0` تا `1`)
+- `STORE_WATERMARK_ROTATION_DEG` (زاویه چرخش واترمارک به درجه)
 
 ### تولید سفارش نمونه از `.env`
 
@@ -50,6 +54,10 @@ python generator.py sample_order.json output.pdf --env-file .env
 ```bash
 python generator.py sample_order.json output.pdf --env-file .env --font-path ./assets/fonts/YOUR_FONT.ttf
 ```
+
+### تاریخ فاکتور
+
+تاریخ سفارش که از ووکامرس دریافت می‌شود به تاریخ شمسی تبدیل می‌شود و در فاکتور نمایش داده می‌شود.
 
 ### منطق چیدمان هوشمند
 
@@ -72,6 +80,7 @@ python generator.py sample_order.json output.pdf --env-file .env --font-path ./a
 
 خروجی PDF به‌صورت خودکار داخل مسیر زیر ذخیره می‌شود (بر اساس تاریخ شمسی روز اجرا):
 
-- `مسیر خروجی/سال/ماه/شماره_سفارش.pdf`
+- `مسیر خروجی/سال/ماه/تاریخ_شمسی_شماره_سفارش.pdf`
+  - مثال: `1404/12/14041205_1001.pdf`
 
 اگر پوشه‌ها وجود نداشته باشند، خود برنامه آن‌ها را می‌سازد.
