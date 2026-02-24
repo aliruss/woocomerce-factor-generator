@@ -169,7 +169,7 @@ def resolve_output_path(requested_output: Path, order_number: str, now: datetime
     jy, jm, _ = gregorian_to_jalali(now.year, now.month, now.day)
     base_dir = requested_output.parent if requested_output.suffix.lower() == ".pdf" else requested_output
 
-    target_dir = base_dir / str(jy) / f"{jm:02d}" / str(order_number)
+    target_dir = base_dir / str(jy) / f"{jm:02d}"
     target_dir.mkdir(parents=True, exist_ok=True)
     return target_dir / f"{order_number}.pdf"
 

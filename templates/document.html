@@ -22,10 +22,20 @@
     </div>
 
     <section class="sheet-section invoice-block">
+      <div class="watermark-layer" aria-hidden="true">
+        {% for _ in range(24) %}
+        <span>{{ watermark_text }}</span>
+        {% endfor %}
+      </div>
       {{ invoice_html | safe }}
     </section>
 
     <section class="sheet-section packing-block {% if layout == 'new_page' %}page-break-before{% endif %}">
+      <div class="watermark-layer" aria-hidden="true">
+        {% for _ in range(24) %}
+        <span>{{ watermark_text }}</span>
+        {% endfor %}
+      </div>
       {{ packing_html | safe }}
     </section>
   </body>
