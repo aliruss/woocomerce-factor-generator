@@ -17,6 +17,8 @@ body {
 }
 
 .sheet-section {
+  position: relative;
+  z-index: 1;
   page-break-inside: avoid;
   break-inside: avoid;
   margin-bottom: 4mm;
@@ -136,4 +138,30 @@ h3 {
   align-items: center;
   justify-content: center;
   border-style: dashed;
+}
+
+
+.watermark-layer {
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  align-content: space-around;
+  justify-items: center;
+  pointer-events: none;
+}
+
+.watermark-layer span {
+  font-size: 10mm;
+  font-weight: 700;
+  color: rgba(0, 0, 0, 0.10);
+  transform: rotate(-30deg);
+  white-space: nowrap;
+}
+
+.store-name {
+  font-size: 4.2mm;
+  font-weight: 700;
+  margin-bottom: 2mm;
 }
