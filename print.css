@@ -17,6 +17,7 @@ body {
 }
 
 .sheet-section {
+  position: relative;
   page-break-inside: avoid;
   break-inside: avoid;
   margin-bottom: 4mm;
@@ -28,8 +29,51 @@ body {
 }
 
 .doc {
+  position: relative;
   border: 0.2mm solid #333;
   padding: 4mm;
+  overflow: hidden;
+}
+
+.doc-content {
+  position: relative;
+  z-index: 1;
+}
+
+.doc-watermark {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+}
+
+.doc-watermark span {
+  position: absolute;
+  width: 45%;
+  text-align: center;
+  font-weight: 700;
+  color: #000;
+  white-space: nowrap;
+}
+
+.doc-watermark span:nth-child(1) {
+  top: 18%;
+  right: 6%;
+}
+
+.doc-watermark span:nth-child(2) {
+  top: 45%;
+  left: 8%;
+}
+
+.doc-watermark span:nth-child(3) {
+  top: 70%;
+  right: 10%;
+}
+
+.doc-watermark span:nth-child(4) {
+  top: 82%;
+  left: 12%;
 }
 
 .doc-header {
@@ -129,11 +173,8 @@ h3 {
   justify-content: space-between;
 }
 
-.cut-guide {
-  margin-top: 3mm;
-  min-height: 20mm;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  border-style: dashed;
+.store-name {
+  font-size: 4.2mm;
+  font-weight: 700;
+  margin-bottom: 2mm;
 }
