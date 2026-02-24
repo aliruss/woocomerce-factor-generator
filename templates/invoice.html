@@ -1,42 +1,51 @@
 <article class="doc invoice" id="invoice-root">
-  <header class="doc-header">
-    <h1>فاکتور فروش</h1>
-    <div class="meta-grid">
-      <div><span class="label">شماره سفارش:</span> {{ order_number }}</div>
-      <div><span class="label">تاریخ:</span> {{ order_date }}</div>
-      <div><span class="label">مشتری:</span> {{ customer_name }}</div>
-      <div><span class="label">تلفن:</span> {{ customer_phone }}</div>
-    </div>
-  </header>
+  <div class="doc-watermark" aria-hidden="true">
+    {% for _ in range(16) %}
+    <span>{{ store.watermark_text }}</span>
+    {% endfor %}
+  </div>
 
-  <table class="items-table">
-    <thead>
-      <tr>
-        <th>محصول</th>
-        <th>تعداد</th>
-        <th>قیمت واحد (تومان)</th>
-        <th>جمع (تومان)</th>
-      </tr>
-    </thead>
-    <tbody>
-      {% for item in items %}
-      <tr>
-        <td>{{ item.name }}</td>
-        <td>{{ item.quantity }}</td>
-        <td>{{ item.unit_price }}</td>
-        <td>{{ item.line_total }}</td>
-      </tr>
-      {% endfor %}
-    </tbody>
-  </table>
-
-  <footer class="invoice-footer">
-    <div class="total-row"><span>جمع کل:</span> <strong>{{ total }} تومان</strong></div>
-    {% if customer_note %}
-      <div class="note-box">
-        <span class="label">توضیحات سفارش:</span>
-        <p>{{ customer_note }}</p>
+  <div class="doc-content">
+    <header class="doc-header">
+      <h1>فاکتور فروش</h1>
+      <p class="store-name">{{ store.name }}</p>
+      <div class="meta-grid">
+        <div><span class="label">شماره سفارش:</span> {{ order_number }}</div>
+        <div><span class="label">تاریخ:</span> {{ order_date }}</div>
+        <div><span class="label">مشتری:</span> {{ customer_name }}</div>
+        <div><span class="label">تلفن:</span> {{ customer_phone }}</div>
       </div>
-    {% endif %}
-  </footer>
+    </header>
+
+    <table class="items-table">
+      <thead>
+        <tr>
+          <th>محصول</th>
+          <th>تعداد</th>
+          <th>قیمت واحد (تومان)</th>
+          <th>جمع (تومان)</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for item in items %}
+        <tr>
+          <td>{{ item.name }}</td>
+          <td>{{ item.quantity }}</td>
+          <td>{{ item.unit_price }}</td>
+          <td>{{ item.line_total }}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+
+    <footer class="invoice-footer">
+      <div class="total-row"><span>جمع کل:</span> <strong>{{ total }} تومان</strong></div>
+      {% if customer_note %}
+        <div class="note-box">
+          <span class="label">توضیحات سفارش:</span>
+          <p>{{ customer_note }}</p>
+        </div>
+      {% endif %}
+    </footer>
+  </div>
 </article>
