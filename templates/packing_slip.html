@@ -1,8 +1,8 @@
 <article class="doc packing-slip" id="packing-root">
   {% if store.watermark_enabled and store.watermark_text %}
-  <div class="doc-watermark" aria-hidden="true" style="--watermark-font-size-mm: {{ store.watermark_font_size_mm }}mm; --watermark-opacity: {{ store.watermark_opacity }}; --watermark-rotation: {{ store.watermark_rotation_deg }}deg;">
-    {% for _ in range(6) %}
-    <span>{{ store.watermark_text }}</span>
+  <div class="doc-watermark" aria-hidden="true">
+    {% for _ in range(4) %}
+    <span style="font-size: {{ store.watermark_font_size_mm }}mm; opacity: {{ store.watermark_opacity }}; transform: rotate({{ store.watermark_rotation_deg }}deg);">{{ store.watermark_text }}</span>
     {% endfor %}
   </div>
   {% endif %}
